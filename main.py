@@ -51,7 +51,6 @@ async def on_message(message):
       await message.channel.send("!addpizza user: erhöht Pizzazähler für user \n!getpizza user: gibt den Pizzazähler für user zurück \n!resetpizza user: setzt Pizzazähler für user zurück \n!setpizza user integer: setzt den Pizazähler von user auf den integer\n!getallpizza: gibt alle einträge aus\n Lustige neue Ideen sind gerne gesehen")
 
     if msg.startswith('!deletepizza') and str(message.author) =="Hxnnes#3925":
-      print("test1")
       del db[user]
       await message.channel.send(f"{user} wurde gelöscht")
 

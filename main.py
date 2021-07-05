@@ -1,5 +1,6 @@
 import discord
 import os
+import asyncio
 from replit import db 
 from keep_alive import keep_alive
 
@@ -19,7 +20,7 @@ async def on_ready():
 async def on_message(message):
     if message.author == client.user:
       return
-
+    
     text = message.content.split()
     user = 0
 
@@ -31,41 +32,46 @@ async def on_message(message):
       await message.channel.send(f"{user} hat schon {db[user.lower()]} mal Pizza gegessen. Penner!")
       await message.delete()
 
-    if text[0] == '!getpizza':
+    elif text[0] == '!getpizza':
       await message.channel.send(f"{user} hat schon {db[user.lower()]} mal Pizza gegessen. Penner!")
       await message.delete()
 
-    if text[0] == '!resetpizza':
+    elif text[0] == '!resetpizza':
       db[user.lower()] = 0
       await message.channel.send(f"{user}`s Pizzaspeicher wurde gelöscht")
       await message.delete()
 
-    if text[0] == '!setpizza':
+    elif text[0] == '!setpizza':
       db[user.lower()] = text[2]
       await message.channel.send(f"{user} hat schon {db[user.lower()]} mal Pizza gegessen. Penner!")
       await message.delete()
 
-    if text[0] == '!getallpizza':
+    elif text[0] == '!getallpizza':
       liste = ""
       for i in db.keys():
         liste += (str(i) + ": " + str(db[i]) + "\n")
       await message.channel.send(liste)
       await message.delete()
 
-    if text[0] == '!helppizza':
+    elif text[0] == '!helppizza':
       await message.channel.send("!addpizza user: erhöht Pizzazähler für user \n!getpizza user: gibt den Pizzazähler für user zurück \n!resetpizza user: setzt Pizzazähler für user zurück \n!setpizza user integer: setzt den Pizazähler von user auf den integer\n!getallpizza: gibt alle einträge aus\n Lustige neue Ideen sind gerne gesehen")
       await message.delete()
 
-    if text[0] == '!deletepizza' and message.author.id == int(os.environ['myID']):
+    elif text[0] == '!deletepizza' and message.author.id == int(os.environ['myID']):
       del db[user]
       await message.channel.send(f"{user} wurde gelöscht")
       await message.delete()
 
-    if text[0] == '!deleteallpizzayesimsure' and message.author.id == int(os.environ['myID']):
+    elif text[0] == '!deleteallpizzayesimsure' and message.author.id == int(os.environ['myID']):
       for i in db.keys():
         del db[i]
       await message.channel.send(f"keys: {''.join(db.keys())}")
       await message.delete()
+
+    elif text[0].startswith("!") and "pizza" in text[0]:
+      reply = await message.channel.send(f"{message.content} ist kein gültiger Befehl für den Pizzabot. (falls diese Nachricht nicht für den Pizzabot war tut es mir leid")
+      await asyncio.sleep(10)
+      await reply.delete()
 
 keep_alive()
 client.run(os.environ['TOKEN'])

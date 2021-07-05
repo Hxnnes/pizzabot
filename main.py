@@ -1,16 +1,12 @@
 import discord
 import os
 import asyncio
+import datetime
+import re
 from replit import db 
 from keep_alive import keep_alive
 
 client = discord.Client()
-
-def update_user(user):
-  if user in db.keys():
-    db[user] = db[user] + 1
-  else:
-    db[user] = 1
 
 @client.event
 async def on_ready():
@@ -27,38 +23,67 @@ async def on_message(message):
     if len(text) >= 2:
       user = text[1]
     
-    if text[0] == '!addpizza':
-      update_user(user.lower())
-      await message.channel.send(f"{user} hat schon {db[user.lower()]} mal Pizza gegessen. Penner!")
+    if text[0] == '!addpizza' and len(text) == 2:
+      if user.lower() in db.keys():
+        db[user.lower()].append(str(message.created_at.date()))
+      else:
+        db[user.lower()] = [str(message.created_at.date())]
+      await message.channel.send(f"{user} hat schon {len(db[user.lower()])} mal Pizza gegessen. Penner!")
       await message.delete()
 
-    elif text[0] == '!getpizza':
-      await message.channel.send(f"{user} hat schon {db[user.lower()]} mal Pizza gegessen. Penner!")
+    elif text[0] == '!addpizza' and len(text) == 3 and re.match("202[0-9]-[0-1][0-9]-[0-3][0-9]", text[2]):
+      if user.lower() in db.keys():
+        db[user.lower()].append(text[2])
+      else:
+        db[user.lower()] = [text[2]]
+      await message.channel.send(f"{user} hat schon {len(db[user.lower()])} mal Pizza gegessen. Penner!")
       await message.delete()
 
-    elif text[0] == '!resetpizza':
-      db[user.lower()] = 0
+    elif text[0] == '!getpizza' and len(text) == 2:
+      await message.channel.send(f"{user} hat schon {len(db[user.lower()])} mal Pizza gegessen. Penner!")
+      await message.delete()
+
+    elif text[0] == '!getpizza' and len(text) == 3:
+      count = 0
+      datetoday = datetime.date.today()
+      for i in db[user.lower()]:
+        iDate = datetime.datetime.strptime(i, "%Y-%m-%d").date()
+        if (datetoday - iDate).days <= int(text[2]):
+          count += 1
+        else: break
+      await message.channel.send(f"{user} hat in den letzten {text[2]} Tagen {count} mal Pizza gegessen.")
+      await message.delete()
+
+    elif text[0] == '!getpizzadates' and len(text) == 2:
+      await message.channel.send(f"{user}: {', '.join(db[user.lower()])}")
+      await message.delete()
+
+    elif text[0] == '!resetpizza' and message.author.id == int(os.environ['myID']):
+      db[user.lower()] = []
       await message.channel.send(f"{user}`s Pizzaspeicher wurde gelöscht")
       await message.delete()
 
-    elif text[0] == '!setpizza':
+    elif text[0] == '!substractpizza' and message.author.id == int(os.environ['myID']):
       db[user.lower()] = text[2]
+      for i in range(text[2]):
+        pass
       await message.channel.send(f"{user} hat schon {db[user.lower()]} mal Pizza gegessen. Penner!")
       await message.delete()
 
-    elif text[0] == '!getallpizza':
+    elif text[0] == '!getallpizza' and len(text) == 1:
       liste = ""
       for i in db.keys():
-        liste += (str(i) + ": " + str(db[i]) + "\n")
+        liste += (str(i) + ": " + str(len(db[i])) + "\n")
       await message.channel.send(liste)
       await message.delete()
 
     elif text[0] == '!helppizza':
-      await message.channel.send("!addpizza user: erhöht Pizzazähler für user \n!getpizza user: gibt den Pizzazähler für user zurück \n!resetpizza user: setzt Pizzazähler für user zurück \n!setpizza user integer: setzt den Pizazähler von user auf den integer\n!getallpizza: gibt alle einträge aus\n Lustige neue Ideen sind gerne gesehen")
+      await message.channel.send("!addpizza user [year-month-day]: fügt gegessene Pizza für user heute [oder eingetragenes Datum] ein \n!getpizza user [int]: gibt gegessene Pizzen für user zurück [begrenzt auf die letzten int tage] \n!getpizzadates user: gibt die Daten des Pizzaessens für user aus\n!getallpizza: gibt alle einträge aus\n Lustige neue Ideen sind gerne gesehen")
       await message.delete()
 
     elif text[0] == '!deletepizza' and message.author.id == int(os.environ['myID']):
-      del db[user]
+      if db[user]:
+        del db[user]
       await message.channel.send(f"{user} wurde gelöscht")
       await message.delete()
 
